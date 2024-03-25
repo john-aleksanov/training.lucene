@@ -1,0 +1,24 @@
+Integrating Lucene and PHP
+This article discusses how Lucene can be used in conjunction with a scripting front-end like PHP. The techniques discussed also applies to other scripting languages like Python, Perl and Ruby, though these may have their own Lucene implementations and which may or may not be more appropriate to use.
+
+Zend/Lucy/PyLucene/etc vs Java Lucene
+The first decision to make when you've decided to use Lucene for searching is how to integrate it into your front-end. If you're using a Java-based front-end like servlets or JSP, this is relatively straightforward. However, if your front-end is built in PHP or Python, there are 2 main options available to you:
+1. Use a PHP/Python/Ruby port of Lucene
+2. Use a Java Lucene backend which interacts with your front-end using HTTP or SOAP
+I personally do not have a great deal of experience with using the ports of Lucene. I had experimented with Zend Lucene with rather poor results, but that was in Zend Lucene's early days and things might be completely different now.
+
+I have, however, had very good results using both a custom-built Java Lucene backend + PHP frontend, as well as SOLR backend + PHP frontend. The architecture has scaled very well and provided lots of room for growth.
+
+Additionally, the ports of Lucene will almost always lag behind Java Lucene development by at least a minor version, if not a major version.
+
+SOLR vs custom
+SOLR is a great out-of-box solution for implementing a Java Lucene backend over HTTP.
+
+If you're making extensive customizations to Lucene, like to scorers or custom queries, then it makes more sense to have a custom servlet-based implementation.
+
+Anatomy of a Java Lucene backend
+There would essentially be two main servlets: SearchServlet and UpdateServlet.
+
+SearchServlet takes care of searching and UpdateServlet takes care of updates to the index. The respective servlets would be called by the PHP code (using CURL) when an enduser makes a form post or search request.
+
+SOLR requires that updates be provided in the full XML, but if you're implementing a custom servlet backend and the data is in a database, you could easily just pass the pk of the table row that is being updated and the servlet can handle the updating.

@@ -1,0 +1,36 @@
+Lucene vs Solr
+Many people new to Lucene and Solr will ask the obvious question: Should I use Lucene or Solr?
+
+The answer is simple: if you're asking yourself this question, in 99% of situations, what you want to use is Solr.
+
+A simple way to conceptualize the relationship between Solr and Lucene is that of a car and its engine. You can't drive an engine, but you can drive a car. Similarly, Lucene is a programmatic library which you can't use as-is, whereas Solr is a complete application which you can use out-of-box.
+
+What is Solr?
+Apache Solr is a web application built around Lucene with all kinds of goodies.
+
+It adds functionality like
+
+XML/HTTP and JSON APIs
+Hit highlighting
+Faceted Search and Filtering
+Geospatial Search
+Fast Incremental Updates and Index Replication
+Caching
+Replication
+Web administration interface etc
+Unlike Lucene, Solr is a web application (WAR) which can be deployed in any servlet container, e.g. Jetty, Tomcat, Resin, etc.
+
+Solr can be installed and used by non-programmers. Lucene cannot.
+
+Is it well supported?
+Yes! The Solr community is very vibrant and helpful.
+
+Can Solr indexes be read by Lucene and vice-versa?
+Since Solr uses Lucene under the hood, Solr indexes and Lucene indexes are one and the same thing.
+
+There is technically no such thing as a Solr index, only a Lucene index created by a Solr instance.
+
+When should I use Lucene then?
+If you need to embed search functionality into a desktop application for example, Lucene is the more appropriate choice.
+
+For situations where you have very customized requirements requiring low-level access to the Lucene API classes, Solr may be more a hindrance than a help, since it is an extra layer of indirection.

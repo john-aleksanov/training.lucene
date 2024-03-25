@@ -1,0 +1,43 @@
+Permission Filtering
+Lucene's keyword-based scoring system is appropriate for filtering and ranking documents based on relevancy. It is based on a vector model, where documents are assigned a score with higher scores corresponding to more relevant documents. However, applications sometimes need to return only a subset of the relevant documents because of user-level permissions.
+
+The problem of permission filtering is actually a subset of a more generic problem of applying a boolean filter to documents at query-time. We'll examine the ways whereby this filtering can be implemented.
+
+Query rewrite
+The obvious method of implementing permission filtering is to rewrite the search query to require that a Field contain a certain value.
+
+For example, if there is a "category" Field, and suppose only Documents in the history and science categories are to be displayed, then given a user's query of
+
+<query>
+the query can be rewritten to
+<query> +category:history +category:science
+Query Filter
+Suppose its not feasible or desirable for a Field to be used for filtering (maybe because the Field is volatile and frequent changes would result in lots of index modifications). Another approach is to create a Filter by implementing the Filter interface. Only one method needs to be implemented, which is the bits() method, which returns a BitSet of all document ids which are allowed to be returned as hits.
+
+In bits(), you can either enumerate through Term values using TermEnum (slow!) or use FieldCache to retrieve all values of a field (fast but memory-intensive!).
+
+HitCollector + FieldCache
+Another place to filter Documents is to use a HitCollector instead of the Hits object. The collect() method has the Document id and score as the arguments, which you can use to determine if a Document is allowable.
+
+Using HitCollector has a minor downside that the useful methods in the Hits class for traversing search results aren't available, but its simple to workaround this.
+
+Examples
+Let's say you had a multi-user blogging app and want to allow the user to search all blog posts (the default), or to allow the user to search only blog posts of which he is an author. The Lucene model for the blog app would map every blog post to a Document.
+
+Using the Query rewrite approach, you can easily append the search clause
+
+<query> +author:<authorid>
+which will only return the author's documents. Problem solved.
+Now, let's extend the example. Suppose 3 access roles exist in the app: admin, editor, writer. These access roles are in descending order of power, so an editor has write access to a writer's posts but not to an admin's posts. How can we allow the user to search only the blog posts which he has write access to?
+
+The Query rewrite approach can be used by adding a "role" Field to each Document and populating it with the value of the author's role. Supposing the user's role is an editor, then the query rewriting would look like
+
+<query> +(role:editor role:writer)
+This approach works, but is sub-obtimal because every time an author's role changes, we'd have to update the Documents of all blog posts he authored.
+
+Another way to use Query rewrite is to obtain the list of all users which fall under the writer and editor roles, and appending these to the query, like so
+
+<query> +(author:1 author:2 author:......)
+This is better, but large OR-query clauses for boolean filtering may hamper search performance slightly.
+
+A third way of implementing this functionality is to obtain the list of the desired users as in the previous step, but instead of rewriting the query, use the HitCollector + FieldCache approach so that only the desired posts are accepted. This approach has the benefit of the second approach without the performance penalty.

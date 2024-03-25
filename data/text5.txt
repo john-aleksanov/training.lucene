@@ -1,0 +1,37 @@
+Indexing Databases with Lucene
+A common use-case for Lucene is performing a full-text search on one or more database tables. Although MySQL comes with a full-text search functionality, it quickly breaks down for all but the simplest kind of queries and when there is a need for field boosting, customizing relevance ranking, etc.
+
+Mapping data to Lucene
+The biggest challenge generally is deciding how to represent your data in Lucene. Most probably, this will involve denormalizing your tables into a flat Lucene Document.
+
+The pseudo code will look something like this:
+
+String sql = "select id, firstname, lastname, phone, email from person";
+ResultSet rs = stmt.executeQuery(sql);
+while (rs.next()) {
+    Document doc = new Document();
+    doc.add(new Field("id", rs,getString("id"), Field.Store.YES, Field.Index.UN_TOKENIZED));
+    doc.add(new Field("firstname", rs,getString("firstname"), Field.Store.YES, Field.Index.TOKENIZED));
+    // ... repeat for each column in result set
+    writer.addDocument(doc);
+}
+
+Displaying search results
+When it comes to displaying search results to the user, you have 2 choices:
+
+Since your table has already been flattened into Lucene, just use the Fields in the Document. Because Lucene is also very fast, this takes load off your database and is a good thing.
+If you need to display additional data in your search result page, simply collect the "id"s from the Hits, then fetch the data from the table and build the page from the resultset.
+Things to look out for
+The approach outlined above assumes loading the entire result set into memory, which could easily be a problem for larger data sets. You might need to do some paging/offset in your sql.
+
+You also want to have a try/catch loop within the resultset while loop to ensure that if an exception is thrown when adding a document, it doesn't kill the entire indexing.
+
+Its often a good idea to concatenate all the fields into a single "contents" field and just search on that, but also leaving individual fields intact so field searches work.
+
+If you have multiple tables to search
+It is usually best to have separate lucene indexes for searches on different types of data, rather than adding them to a single index distinguished by a "type" field.
+
+Here's why:
+
+Maintenance operations are easier. If you've just performed a batch update on a table, you only need to rebuild that specific index instead of the entire index.
+Global tf/idf values will be affected, affecting ranking of results. If the data is of the same "type", then that is desirable. Otherwise, not.
